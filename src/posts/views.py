@@ -2,13 +2,7 @@ from django.shortcuts import render
 
 from .models import Form, Post
 
-# Create your views here.
-
 import pickle
-
-#CRUD - create retrieve update delete
-
-#List all the posts
 
 def post_list_view(request):
     post_objects=Post.objects.all()
@@ -16,6 +10,7 @@ def post_list_view(request):
         'post_objects':post_objects
     }
     return render(request,"posts/index.html",context)
+
 
 def getPrediction(age,sex,cp,bp,col,fbs,ekg,mhr,ex,stdep,slop,num,thal):
     knnClassifier=pickle.load(open('posts/knnClassifier.pkl', 'rb'))
@@ -53,11 +48,77 @@ def result(request):
         num=int(request.GET['num'])
         thal=int(request.GET['thal'])
 
+        DBURL = "mongodb+srv://vnr2022:vnr2022@shivacluster.zijeq.mongodb.net/admin?authSource=admin&replicaSet=atlas-unyjbr-shard-0&w=majority&readPreference=primary&retryWrites=true&ssl=true"
+
+        # CONNECTION AND CREATION OF DATABASE
+        from pymongo import MongoClient
+        import pymongo
+
+        client = pymongo.MongoClient(DBURL)
+
+        obj  = {
+            "age": age,
+            "sex" : sex,
+            "cp" : cp,
+            "bp" : bp,
+            "col" : col,
+            "fbs" : fbs,
+            "ekg" : ekg,
+            "mhr" : mhr,
+            "ex" : ex,
+            "stdep" : stdep,
+            "slop" : slop,
+            "num" : num,
+            "thal" : thal,
+        }
+
+        db = client.summerdb
+        coll = db['collection']
+        s = coll.insert_one(obj)
+
         result=getPrediction(age,sex,cp,bp,col,fbs,ekg,mhr,ex,stdep,slop,num,thal)
 
         return render(request,"posts/result.html",{'result':result})
     except:
         return render(request,"posts/result.html",{'result':'Something went wrong'})
+
+def stats(request):
+    
+    DBURL = "mongodb+srv://vnr2022:vnr2022@shivacluster.zijeq.mongodb.net/admin?authSource=admin&replicaSet=atlas-unyjbr-shard-0&w=majority&readPreference=primary&retryWrites=true&ssl=true"
+
+    # CONNECTION AND CREATION OF DATABASE
+    from pymongo import MongoClient
+    import pymongo
+
+    client = pymongo.MongoClient(DBURL)
+
+    db = client.summerdb
+    coll = db['collection']
+    s = list(coll.find())
+
+    ages=[0]*10
+    try:
+        for i in s:
+            ages[i['age']//10]+=1
+    except:
+        print()
+
+    sex=[0,0]
+    try:
+        for i in s:
+            sex[i['sex']]+=1
+    except:
+        print()
+
+    age,bp=[],[]
+    try:
+        for i in s:
+            age.append(i['age'])
+            bp.append(i['bp'])
+    except:
+        print()
+
+    return render(request,"posts/stats.html",{'ages':ages,'sex':sex,'agebp_age':age,'agebp_bp': bp})
 
 def header(request):
     return render(request,"posts/header.html")
