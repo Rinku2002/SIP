@@ -48,34 +48,6 @@ def result(request):
         num=int(request.GET['num'])
         thal=int(request.GET['thal'])
 
-        DBURL = "mongodb+srv://vnr2022:vnr2022@shivacluster.zijeq.mongodb.net/admin?authSource=admin&replicaSet=atlas-unyjbr-shard-0&w=majority&readPreference=primary&retryWrites=true&ssl=true"
-
-        # CONNECTION AND CREATION OF DATABASE
-        from pymongo import MongoClient
-        import pymongo
-
-        client = pymongo.MongoClient(DBURL)
-
-        obj  = {
-            "age": age,
-            "sex" : sex,
-            "cp" : cp,
-            "bp" : bp,
-            "col" : col,
-            "fbs" : fbs,
-            "ekg" : ekg,
-            "mhr" : mhr,
-            "ex" : ex,
-            "stdep" : stdep,
-            "slop" : slop,
-            "num" : num,
-            "thal" : thal,
-        }
-
-        db = client.summerdb
-        coll = db['collection']
-        s = coll.insert_one(obj)
-
         result=getPrediction(age,sex,cp,bp,col,fbs,ekg,mhr,ex,stdep,slop,num,thal)
 
         return render(request,"posts/result.html",{'result':result})
